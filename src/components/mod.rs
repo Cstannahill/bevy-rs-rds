@@ -28,3 +28,8 @@ pub struct Projectile {
     pub owner: usize,
     pub damage: f32,
 }
+
+#[derive(Component)]
+pub struct Lifetime {
+    pub time_left: f32,
+}
