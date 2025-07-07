@@ -1,0 +1,9 @@
+[package]
+name = "magic_duel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = "0.11"
+bevy_kira_audio = "0.16"
+bevy_rapier2d = { version = "0.22", default-features = false, features = ["dim2"] }
