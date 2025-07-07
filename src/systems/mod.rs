@@ -1,7 +1,8 @@
-use crate::components::{Health, Player, Projectile, Stats, Velocity};
 use crate::components::Lifetime;
+use crate::components::{Health, Inventory, Player, Projectile, Stats, Velocity};
 use crate::events::PlayerKilled;
-use crate::resources::RoundManager;
+use crate::resources::{CardSelection, RoundManager};
+use crate::states::GameState;
 use bevy::prelude::*;
 
 const GRAVITY: f32 = -600.0;
@@ -27,8 +28,12 @@ pub fn setup(mut commands: Commands) {
             move_speed: 200.0,
             jump_force: 400.0,
             damage: 10.0,
+            projectile_speed: 300.0,
+            shot_cooldown: 0.5,
+            cooldown_timer: 0.0,
         },
         Velocity::default(),
+        crate::components::Inventory::default(),
     ));
     commands.spawn((
         SpriteBundle {
@@ -49,17 +54,21 @@ pub fn setup(mut commands: Commands) {
             move_speed: 200.0,
             jump_force: 400.0,
             damage: 10.0,
+            projectile_speed: 300.0,
+            shot_cooldown: 0.5,
+            cooldown_timer: 0.0,
         },
         Velocity::default(),
+        crate::components::Inventory::default(),
     ));
 }
 
 pub fn player_input(
     keyboard: Res<Input<KeyCode>>,
     mut commands: Commands,
-    mut query: Query<(&Player, &Stats, &Transform, &mut Velocity)>,
+    mut query: Query<(&Player, &mut Stats, &Transform, &mut Velocity)>,
 ) {
-    for (player, stats, transform, mut velocity) in query.iter_mut() {
+    for (player, mut stats, transform, mut velocity) in query.iter_mut() {
         let mut direction = 0.0;
         match player.id {
             1 => {
@@ -72,8 +81,9 @@ pub fn player_input(
                 if keyboard.just_pressed(KeyCode::W) && transform.translation.y <= 0.0 {
                     velocity.linvel.y = stats.jump_force;
                 }
-                if keyboard.just_pressed(KeyCode::Space) {
-                    spawn_projectile(&mut commands, player.id, transform);
+                if keyboard.pressed(KeyCode::Space) && stats.cooldown_timer <= 0.0 {
+                    spawn_projectile(&mut commands, player.id, &*stats, transform);
+                    stats.cooldown_timer = stats.shot_cooldown;
                 }
             }
             2 => {
@@ -86,8 +96,9 @@ pub fn player_input(
                 if keyboard.just_pressed(KeyCode::Up) && transform.translation.y <= 0.0 {
                     velocity.linvel.y = stats.jump_force;
                 }
-                if keyboard.just_pressed(KeyCode::Return) {
-                    spawn_projectile(&mut commands, player.id, transform);
+                if keyboard.pressed(KeyCode::Return) && stats.cooldown_timer <= 0.0 {
+                    spawn_projectile(&mut commands, player.id, &*stats, transform);
+                    stats.cooldown_timer = stats.shot_cooldown;
                 }
             }
             _ => {}
@@ -96,8 +107,11 @@ pub fn player_input(
     }
 }
 
-pub fn apply_velocity(time: Res<Time>, mut query: Query<(&mut Transform, &mut Velocity)>) {
-    for (mut transform, mut velocity) in query.iter_mut() {
+pub fn apply_velocity(
+    time: Res<Time>,
+    mut query: Query<(&mut Transform, &mut Velocity, Option<&mut Stats>)>,
+) {
+    for (mut transform, mut velocity, stats) in query.iter_mut() {
         velocity.linvel.y += GRAVITY * time.delta_seconds();
         transform.translation.x += velocity.linvel.x * time.delta_seconds();
         transform.translation.y += velocity.linvel.y * time.delta_seconds();
@@ -105,6 +119,11 @@ pub fn apply_velocity(time: Res<Time>, mut query: Query<(&mut Transform, &mut Ve
             // simple ground
             transform.translation.y = 0.0;
             velocity.linvel.y = 0.0;
+        }
+        if let Some(mut s) = stats {
+            if s.cooldown_timer > 0.0 {
+                s.cooldown_timer -= time.delta_seconds();
+            }
         }
     }
 }
@@ -147,7 +166,7 @@ pub fn projectile_player_collision(
     let player_size = Vec2::splat(30.0);
     let proj_size = Vec2::splat(10.0);
     for (proj_entity, projectile, proj_transform) in projectiles.iter_mut() {
-        for (player_entity, player, mut health, player_transform) in players.iter_mut() {
+        for (_player_entity, player, mut health, player_transform) in players.iter_mut() {
             if player.id == projectile.owner {
                 continue;
             }
@@ -160,7 +179,10 @@ pub fn projectile_player_collision(
                 health.current -= projectile.damage;
                 commands.entity(proj_entity).despawn();
                 if health.current <= 0.0 {
-                    kill_writer.send(PlayerKilled { winner: projectile.owner });
+                    kill_writer.send(PlayerKilled {
+                        winner: projectile.owner,
+                        loser: player.id,
+                    });
                 }
                 break;
             }
@@ -171,9 +193,11 @@ pub fn projectile_player_collision(
 pub fn round_manager(
     mut commands: Commands,
     mut manager: ResMut<RoundManager>,
+    mut selection: ResMut<CardSelection>,
     mut reader: EventReader<PlayerKilled>,
     mut players: Query<(&Player, &mut Health, &mut Transform)>,
     projectiles: Query<Entity, With<Projectile>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
     for event in reader.iter() {
         match event.winner {
@@ -195,18 +219,24 @@ pub fn round_manager(
             };
         }
 
-        info!(
-            "Scores - P1: {} P2: {}",
-            manager.p1_score, manager.p2_score
-        );
+        info!("Scores - P1: {} P2: {}", manager.p1_score, manager.p2_score);
 
         if manager.p1_score >= manager.rounds_to_win || manager.p2_score >= manager.rounds_to_win {
             info!("Game Over");
+            next_state.set(GameState::GameOver);
+        } else {
+            selection.loser = Some(event.loser);
+            selection.choices = crate::cards::random_choices(3);
+            info!("Player {} choose a card:", event.loser);
+            for (i, c) in selection.choices.iter().enumerate() {
+                info!("{}: {} - {}", i + 1, c.name, c.description);
+            }
+            next_state.set(GameState::CardSelection);
         }
     }
 }
 
-fn spawn_projectile(commands: &mut Commands, owner: usize, transform: &Transform) {
+fn spawn_projectile(commands: &mut Commands, owner: usize, stats: &Stats, transform: &Transform) {
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
@@ -221,11 +251,48 @@ fn spawn_projectile(commands: &mut Commands, owner: usize, transform: &Transform
         },
         Projectile {
             owner,
-            damage: 10.0,
+            damage: stats.damage,
         },
         Lifetime { time_left: 2.0 },
         Velocity {
-            linvel: Vec2::new(0.0, 300.0),
+            linvel: Vec2::new(0.0, stats.projectile_speed),
         },
     ));
+}
+
+pub fn card_input_system(
+    keyboard: Res<Input<KeyCode>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut selection: ResMut<CardSelection>,
+    mut players: Query<(&Player, &mut Stats, &mut Inventory)>,
+    state: Res<State<GameState>>,
+) {
+    if state.get() != &GameState::CardSelection {
+        return;
+    }
+    let loser = match selection.loser {
+        Some(id) => id,
+        None => return,
+    };
+    let mut picked = None;
+    if keyboard.just_pressed(KeyCode::Key1) {
+        picked = Some(0);
+    } else if keyboard.just_pressed(KeyCode::Key2) {
+        picked = Some(1);
+    } else if keyboard.just_pressed(KeyCode::Key3) {
+        picked = Some(2);
+    }
+    if let Some(idx) = picked {
+        if let Some(card) = selection.choices.get(idx) {
+            for (player, mut stats, mut inv) in players.iter_mut() {
+                if player.id == loser {
+                    crate::cards::apply(card.id, &mut stats);
+                    inv.cards.push(card.id);
+                }
+            }
+        }
+        selection.loser = None;
+        selection.choices.clear();
+        next_state.set(GameState::InGame);
+    }
 }

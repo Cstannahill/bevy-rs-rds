@@ -1,12 +1,15 @@
 use bevy::prelude::*;
 
+mod cards;
 mod components;
-mod systems;
-mod resources;
 mod events;
+mod resources;
+mod states;
+mod systems;
 
 use events::PlayerKilled;
-use resources::RoundManager;
+use resources::{CardSelection, RoundManager};
+use states::GameState;
 
 fn main() {
     App::new()
@@ -19,6 +22,8 @@ fn main() {
             ..default()
         }))
         .init_resource::<RoundManager>()
+        .init_resource::<CardSelection>()
+        .add_state::<GameState>()
         .add_event::<PlayerKilled>()
         .add_systems(Startup, systems::setup)
         .add_systems(
@@ -30,6 +35,7 @@ fn main() {
                 systems::lifetime_system,
                 systems::projectile_player_collision,
                 systems::round_manager,
+                systems::card_input_system,
             ),
         )
         .run();
