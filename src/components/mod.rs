@@ -16,6 +16,9 @@ pub struct Stats {
     pub move_speed: f32,
     pub jump_force: f32,
     pub damage: f32,
+    pub projectile_speed: f32,
+    pub shot_cooldown: f32,
+    pub cooldown_timer: f32,
 }
 
 #[derive(Component, Default)]
@@ -32,4 +35,9 @@ pub struct Projectile {
 #[derive(Component)]
 pub struct Lifetime {
     pub time_left: f32,
+}
+
+#[derive(Component, Default)]
+pub struct Inventory {
+    pub cards: Vec<crate::cards::CardId>,
 }

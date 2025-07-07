@@ -7,6 +7,12 @@ pub struct RoundManager {
     pub rounds_to_win: u32,
 }
 
+#[derive(Resource, Default)]
+pub struct CardSelection {
+    pub loser: Option<usize>,
+    pub choices: Vec<crate::cards::Card>,
+}
+
 impl Default for RoundManager {
     fn default() -> Self {
         Self {
