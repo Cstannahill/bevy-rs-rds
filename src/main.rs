@@ -14,6 +14,13 @@ fn main() {
             ..default()
         }))
         .add_systems(Startup, systems::setup)
-        .add_systems(Update, systems::player_input)
+        .add_systems(
+            Update,
+            (
+                systems::player_input,
+                systems::apply_velocity,
+                systems::projectile_cleanup,
+            ),
+        )
         .run();
 }
