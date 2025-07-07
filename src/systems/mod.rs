@@ -5,6 +5,9 @@ use crate::resources::{CardSelection, RoundManager};
 use crate::states::GameState;
 use bevy::prelude::*;
 
+mod hud;
+pub use hud::{setup_hud, update_hud};
+
 const GRAVITY: f32 = -600.0;
 
 pub fn setup(mut commands: Commands) {

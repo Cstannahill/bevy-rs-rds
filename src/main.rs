@@ -25,7 +25,7 @@ fn main() {
         .init_resource::<CardSelection>()
         .add_state::<GameState>()
         .add_event::<PlayerKilled>()
-        .add_systems(Startup, systems::setup)
+        .add_systems(Startup, (systems::setup, systems::setup_hud))
         .add_systems(
             Update,
             (
@@ -36,6 +36,7 @@ fn main() {
                 systems::projectile_player_collision,
                 systems::round_manager,
                 systems::card_input_system,
+                systems::update_hud,
             ),
         )
         .run();
