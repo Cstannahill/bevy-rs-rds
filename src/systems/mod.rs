@@ -22,7 +22,7 @@ pub fn setup(mut commands: Commands) {
     ));
     commands.spawn((
         SpriteBundle {
-            transform: Transform::from_xyz(-100.0, 0.0, 0.0),
+            transform: Transform::from_xyz(-100.0, 15.0, 0.0),
             sprite: Sprite {
                 color: Color::BLUE,
                 custom_size: Some(Vec2::splat(30.0)),
@@ -54,7 +54,7 @@ pub fn setup(mut commands: Commands) {
     ));
     commands.spawn((
         SpriteBundle {
-            transform: Transform::from_xyz(100.0, 0.0, 0.0),
+            transform: Transform::from_xyz(100.0, 15.0, 0.0),
             sprite: Sprite {
                 color: Color::RED,
                 custom_size: Some(Vec2::splat(30.0)),
@@ -113,10 +113,10 @@ pub fn player_input(
                 if keyboard.pressed(KeyCode::E) {
                     stats.aim_angle -= 0.05;
                 }
-                if keyboard.just_pressed(KeyCode::W) && transform.translation.y <= 0.0 {
+                if keyboard.just_pressed(KeyCode::Space) && transform.translation.y <= 16.0 {
                     velocity.linvel.y = stats.jump_force;
                 }
-                if keyboard.pressed(KeyCode::Space) && stats.cooldown_timer <= 0.0 {
+                if keyboard.pressed(KeyCode::ControlLeft) && stats.cooldown_timer <= 0.0 {
                     spawn_projectile(&mut commands, player.id, &*stats, transform);
                     stats.cooldown_timer = stats.shot_cooldown;
                 }
@@ -134,7 +134,7 @@ pub fn player_input(
                 if keyboard.pressed(KeyCode::Period) {
                     stats.aim_angle -= 0.05;
                 }
-                if keyboard.just_pressed(KeyCode::Up) && transform.translation.y <= 0.0 {
+                if keyboard.just_pressed(KeyCode::Up) && transform.translation.y <= 16.0 {
                     velocity.linvel.y = stats.jump_force;
                 }
                 if keyboard.pressed(KeyCode::Return) && stats.cooldown_timer <= 0.0 {
