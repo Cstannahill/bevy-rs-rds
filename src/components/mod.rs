@@ -21,10 +21,6 @@ pub struct Stats {
     pub cooldown_timer: f32,
 }
 
-#[derive(Component, Default)]
-pub struct Velocity {
-    pub linvel: Vec2,
-}
 
 #[derive(Component)]
 pub struct Projectile {
