@@ -87,7 +87,13 @@ pub fn setup(mut commands: Commands) {
 pub fn player_input(
     keyboard: Res<Input<KeyCode>>,
     mut commands: Commands,
-    mut query: Query<(&Player, &mut Stats, &Transform, &mut Velocity, Option<&Slowed>)>,
+    mut query: Query<(
+        &Player,
+        &mut Stats,
+        &Transform,
+        &mut Velocity,
+        Option<&Slowed>,
+    )>,
 ) {
     for (player, mut stats, transform, mut velocity, slowed) in query.iter_mut() {
         let mut direction = 0.0;
@@ -99,7 +105,10 @@ pub fn player_input(
                 if keyboard.pressed(KeyCode::D) {
                     direction += 1.0;
                 }
-                if keyboard.just_pressed(KeyCode::W) && transform.translation.y <= 0.0 {
+                if keyboard.just_pressed(KeyCode::W)
+                    && transform.translation.y <= 16.0
+                    && velocity.linvel.y.abs() < 0.1
+                {
                     velocity.linvel.y = stats.jump_force;
                 }
                 if keyboard.pressed(KeyCode::Space) && stats.cooldown_timer <= 0.0 {
@@ -114,7 +123,10 @@ pub fn player_input(
                 if keyboard.pressed(KeyCode::Right) {
                     direction += 1.0;
                 }
-                if keyboard.just_pressed(KeyCode::Up) && transform.translation.y <= 0.0 {
+                if keyboard.just_pressed(KeyCode::Up)
+                    && transform.translation.y <= 16.0
+                    && velocity.linvel.y.abs() < 0.1
+                {
                     velocity.linvel.y = stats.jump_force;
                 }
                 if keyboard.pressed(KeyCode::Return) && stats.cooldown_timer <= 0.0 {
