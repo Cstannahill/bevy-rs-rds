@@ -40,6 +40,7 @@ fn main() {
                 systems::projectile_cleanup,
                 systems::lifetime_system,
                 systems::poison_damage_system,
+                systems::slow_system,
                 systems::projectile_player_collision,
                 systems::round_manager,
                 systems::card_input_system,

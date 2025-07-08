@@ -20,6 +20,7 @@ pub struct Stats {
     pub shot_cooldown: f32,
     pub cooldown_timer: f32,
     pub poison_damage: f32,
+    pub slow_amount: f32,
 }
 
 #[derive(Component)]
@@ -47,5 +48,17 @@ pub struct PoisonEffect {
 #[derive(Component)]
 pub struct Poisoned {
     pub damage_per_second: f32,
+    pub timer: Timer,
+}
+
+#[derive(Component)]
+pub struct SlowEffect {
+    pub amount: f32,
+    pub duration: f32,
+}
+
+#[derive(Component)]
+pub struct Slowed {
+    pub amount: f32,
     pub timer: Timer,
 }
