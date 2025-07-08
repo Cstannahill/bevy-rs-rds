@@ -105,13 +105,13 @@ pub fn player_input(
                 if keyboard.pressed(KeyCode::D) {
                     direction += 1.0;
                 }
-                if keyboard.just_pressed(KeyCode::W)
+                if keyboard.just_pressed(KeyCode::Space)
                     && transform.translation.y <= 16.0
                     && velocity.linvel.y.abs() < 0.1
                 {
                     velocity.linvel.y = stats.jump_force;
                 }
-                if keyboard.pressed(KeyCode::Space) && stats.cooldown_timer <= 0.0 {
+                if keyboard.pressed(KeyCode::F) && stats.cooldown_timer <= 0.0 {
                     spawn_projectile(&mut commands, player.id, &*stats, transform);
                     stats.cooldown_timer = stats.shot_cooldown;
                 }

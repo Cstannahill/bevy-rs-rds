@@ -31,7 +31,7 @@ To build this game, we will use a modern Rust-based game development stack. Belo
 
 - **Input Handling:** Bevy’s input system will let us manage keyboard and gamepad controls. We will support two players:
 
-  - **Player 1:** Keyboard (WASD for movement, space to jump, maybe arrow keys to aim if using aim, etc.) or first gamepad.
+  - **Player 1:** Keyboard (WASD for movement, **space to jump**, **F to shoot**, maybe arrow keys to aim if using aim, etc.) or first gamepad.
   - **Player 2:** Second gamepad (or an alternative key scheme). Bevy assigns unique IDs to each connected gamepad, which we can use to map inputs to specific players. This makes local multiplayer input handling straightforward – we’ll read gamepad events and route them to the appropriate player entity. We will likely create an input mapping resource or use an input plugin (like `leafwing_input_manager`) to define actions (move, jump, shoot, block) and bind them for each player. Ensuring both keyboard and controller can be used will make testing easier (solo developer can control both players with one on keyboard, one on controller).
 
 - **Development Tools & Other Libraries:** As a newcomer to the ecosystem, it’s wise to leverage some helper tools:
