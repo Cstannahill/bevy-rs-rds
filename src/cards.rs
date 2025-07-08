@@ -6,6 +6,7 @@ pub enum CardId {
     Power,
     Speed,
     Jump,
+    Poison,
 }
 
 #[derive(Clone, Copy)]
@@ -31,6 +32,11 @@ pub const ALL_CARDS: &[Card] = &[
         name: "Jump",
         description: "Increase jump force",
     },
+    Card {
+        id: CardId::Poison,
+        name: "Poison",
+        description: "Projectiles apply poison",
+    },
 ];
 
 pub fn random_choices(n: usize) -> Vec<Card> {
@@ -45,5 +51,6 @@ pub fn apply(card: CardId, stats: &mut Stats) {
         CardId::Power => stats.damage *= 1.2,
         CardId::Speed => stats.move_speed *= 1.2,
         CardId::Jump => stats.jump_force *= 1.2,
+        CardId::Poison => stats.poison_damage += 5.0,
     }
 }

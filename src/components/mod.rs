@@ -19,8 +19,8 @@ pub struct Stats {
     pub projectile_speed: f32,
     pub shot_cooldown: f32,
     pub cooldown_timer: f32,
+    pub poison_damage: f32,
 }
-
 
 #[derive(Component)]
 pub struct Projectile {
@@ -36,4 +36,16 @@ pub struct Lifetime {
 #[derive(Component, Default)]
 pub struct Inventory {
     pub cards: Vec<crate::cards::CardId>,
+}
+
+#[derive(Component)]
+pub struct PoisonEffect {
+    pub damage_per_second: f32,
+    pub duration: f32,
+}
+
+#[derive(Component)]
+pub struct Poisoned {
+    pub damage_per_second: f32,
+    pub timer: Timer,
 }

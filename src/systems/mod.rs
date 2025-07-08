@@ -1,10 +1,10 @@
 use crate::components::Lifetime;
-use crate::components::{Health, Inventory, Player, Projectile, Stats};
-use bevy_rapier2d::prelude::*;
+use crate::components::{Health, Inventory, Player, PoisonEffect, Poisoned, Projectile, Stats};
 use crate::events::PlayerKilled;
 use crate::resources::{CardSelection, RoundManager};
 use crate::states::GameState;
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 mod hud;
 pub use hud::{setup_hud, update_hud};
@@ -40,6 +40,7 @@ pub fn setup(mut commands: Commands) {
             projectile_speed: 300.0,
             shot_cooldown: 0.5,
             cooldown_timer: 0.0,
+            poison_damage: 0.0,
         },
         RigidBody::Dynamic,
         Collider::cuboid(15.0, 15.0),
@@ -69,6 +70,7 @@ pub fn setup(mut commands: Commands) {
             projectile_speed: 300.0,
             shot_cooldown: 0.5,
             cooldown_timer: 0.0,
+            poison_damage: 0.0,
         },
         RigidBody::Dynamic,
         Collider::cuboid(15.0, 15.0),
@@ -154,6 +156,20 @@ pub fn lifetime_system(
     }
 }
 
+pub fn poison_damage_system(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut Poisoned, &mut Health)>,
+) {
+    for (entity, mut poison, mut health) in query.iter_mut() {
+        health.current -= poison.damage_per_second * time.delta_seconds();
+        poison.timer.tick(time.delta());
+        if poison.timer.finished() {
+            commands.entity(entity).remove::<Poisoned>();
+        }
+    }
+}
+
 fn aabb_collision(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) -> bool {
     (a_pos.x - b_pos.x).abs() < (a_size.x + b_size.x) * 0.5
         && (a_pos.y - b_pos.y).abs() < (a_size.y + b_size.y) * 0.5
@@ -162,12 +178,12 @@ fn aabb_collision(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) -> bool 
 pub fn projectile_player_collision(
     mut commands: Commands,
     mut players: Query<(Entity, &Player, &mut Health, &Transform)>,
-    mut projectiles: Query<(Entity, &Projectile, &Transform)>,
+    mut projectiles: Query<(Entity, &Projectile, &Transform, Option<&PoisonEffect>)>,
     mut kill_writer: EventWriter<PlayerKilled>,
 ) {
     let player_size = Vec2::splat(30.0);
     let proj_size = Vec2::splat(10.0);
-    for (proj_entity, projectile, proj_transform) in projectiles.iter_mut() {
+    for (proj_entity, projectile, proj_transform, poison) in projectiles.iter_mut() {
         for (_player_entity, player, mut health, player_transform) in players.iter_mut() {
             if player.id == projectile.owner {
                 continue;
@@ -179,6 +195,12 @@ pub fn projectile_player_collision(
                 player_size,
             ) {
                 health.current -= projectile.damage;
+                if let Some(poison) = poison {
+                    commands.entity(_player_entity).insert(Poisoned {
+                        damage_per_second: poison.damage_per_second,
+                        timer: Timer::from_seconds(poison.duration, TimerMode::Once),
+                    });
+                }
                 commands.entity(proj_entity).despawn();
                 if health.current <= 0.0 {
                     kill_writer.send(PlayerKilled {
@@ -239,7 +261,7 @@ pub fn round_manager(
 }
 
 fn spawn_projectile(commands: &mut Commands, owner: usize, stats: &Stats, transform: &Transform) {
-    commands.spawn((
+    let mut entity = commands.spawn((
         SpriteBundle {
             sprite: Sprite {
                 color: Color::YELLOW,
@@ -260,6 +282,12 @@ fn spawn_projectile(commands: &mut Commands, owner: usize, stats: &Stats, transf
         Collider::ball(5.0),
         Velocity::linear(Vec2::new(0.0, stats.projectile_speed)),
     ));
+    if stats.poison_damage > 0.0 {
+        entity.insert(PoisonEffect {
+            damage_per_second: stats.poison_damage,
+            duration: 3.0,
+        });
+    }
 }
 
 pub fn card_input_system(
