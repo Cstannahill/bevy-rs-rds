@@ -21,6 +21,7 @@ pub struct Stats {
     pub cooldown_timer: f32,
     pub poison_damage: f32,
     pub slow_amount: f32,
+    pub aim_angle: f32,
 }
 
 #[derive(Component)]

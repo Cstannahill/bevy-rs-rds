@@ -44,6 +44,7 @@ pub fn setup(mut commands: Commands) {
             cooldown_timer: 0.0,
             poison_damage: 0.0,
             slow_amount: 0.0,
+            aim_angle: std::f32::consts::FRAC_PI_2,
         },
         RigidBody::Dynamic,
         Collider::cuboid(15.0, 15.0),
@@ -75,6 +76,7 @@ pub fn setup(mut commands: Commands) {
             cooldown_timer: 0.0,
             poison_damage: 0.0,
             slow_amount: 0.0,
+            aim_angle: std::f32::consts::FRAC_PI_2,
         },
         RigidBody::Dynamic,
         Collider::cuboid(15.0, 15.0),
@@ -87,7 +89,13 @@ pub fn setup(mut commands: Commands) {
 pub fn player_input(
     keyboard: Res<Input<KeyCode>>,
     mut commands: Commands,
-    mut query: Query<(&Player, &mut Stats, &Transform, &mut Velocity, Option<&Slowed>)>,
+    mut query: Query<(
+        &Player,
+        &mut Stats,
+        &Transform,
+        &mut Velocity,
+        Option<&Slowed>,
+    )>,
 ) {
     for (player, mut stats, transform, mut velocity, slowed) in query.iter_mut() {
         let mut direction = 0.0;
@@ -98,6 +106,12 @@ pub fn player_input(
                 }
                 if keyboard.pressed(KeyCode::D) {
                     direction += 1.0;
+                }
+                if keyboard.pressed(KeyCode::Q) {
+                    stats.aim_angle += 0.05;
+                }
+                if keyboard.pressed(KeyCode::E) {
+                    stats.aim_angle -= 0.05;
                 }
                 if keyboard.just_pressed(KeyCode::W) && transform.translation.y <= 0.0 {
                     velocity.linvel.y = stats.jump_force;
@@ -114,6 +128,12 @@ pub fn player_input(
                 if keyboard.pressed(KeyCode::Right) {
                     direction += 1.0;
                 }
+                if keyboard.pressed(KeyCode::Comma) {
+                    stats.aim_angle += 0.05;
+                }
+                if keyboard.pressed(KeyCode::Period) {
+                    stats.aim_angle -= 0.05;
+                }
                 if keyboard.just_pressed(KeyCode::Up) && transform.translation.y <= 0.0 {
                     velocity.linvel.y = stats.jump_force;
                 }
@@ -124,6 +144,7 @@ pub fn player_input(
             }
             _ => {}
         }
+        stats.aim_angle = stats.aim_angle.clamp(0.0, std::f32::consts::PI);
         let mut speed = stats.move_speed;
         if let Some(s) = slowed {
             speed *= 1.0 - s.amount;
@@ -302,7 +323,8 @@ fn spawn_projectile(commands: &mut Commands, owner: usize, stats: &Stats, transf
                 ..default()
             },
             transform: Transform::from_translation(
-                transform.translation + Vec3::new(0.0, 10.0, 0.0),
+                transform.translation
+                    + Vec3::new(stats.aim_angle.cos(), stats.aim_angle.sin(), 0.0) * 10.0,
             ),
             ..default()
         },
@@ -313,7 +335,9 @@ fn spawn_projectile(commands: &mut Commands, owner: usize, stats: &Stats, transf
         Lifetime { time_left: 2.0 },
         RigidBody::Dynamic,
         Collider::ball(5.0),
-        Velocity::linear(Vec2::new(0.0, stats.projectile_speed)),
+        Velocity::linear(
+            Vec2::new(stats.aim_angle.cos(), stats.aim_angle.sin()) * stats.projectile_speed,
+        ),
     ));
     if stats.poison_damage > 0.0 {
         entity.insert(PoisonEffect {
