@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::render::RapierDebugRenderPlugin;
 
 mod cards;
 mod components;
@@ -21,6 +23,10 @@ fn main() {
             }),
             ..default()
         }))
+        .add_plugins((
+            RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
+            RapierDebugRenderPlugin::default(),
+        ))
         .init_resource::<RoundManager>()
         .init_resource::<CardSelection>()
         .add_state::<GameState>()
@@ -30,7 +36,7 @@ fn main() {
             Update,
             (
                 systems::player_input,
-                systems::apply_velocity,
+                systems::update_cooldowns,
                 systems::projectile_cleanup,
                 systems::lifetime_system,
                 systems::projectile_player_collision,

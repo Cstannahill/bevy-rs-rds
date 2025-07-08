@@ -1,5 +1,6 @@
 use crate::components::Lifetime;
-use crate::components::{Health, Inventory, Player, Projectile, Stats, Velocity};
+use crate::components::{Health, Inventory, Player, Projectile, Stats};
+use bevy_rapier2d::prelude::*;
 use crate::events::PlayerKilled;
 use crate::resources::{CardSelection, RoundManager};
 use crate::states::GameState;
@@ -8,10 +9,15 @@ use bevy::prelude::*;
 mod hud;
 pub use hud::{setup_hud, update_hud};
 
-const GRAVITY: f32 = -600.0;
-
 pub fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+    // Simple ground so players have something to stand on
+    commands.spawn((
+        Collider::cuboid(400.0, 10.0),
+        RigidBody::Fixed,
+        Transform::from_xyz(0.0, -10.0, 0.0),
+        GlobalTransform::default(),
+    ));
     commands.spawn((
         SpriteBundle {
             transform: Transform::from_xyz(-100.0, 0.0, 0.0),
@@ -35,7 +41,10 @@ pub fn setup(mut commands: Commands) {
             shot_cooldown: 0.5,
             cooldown_timer: 0.0,
         },
-        Velocity::default(),
+        RigidBody::Dynamic,
+        Collider::cuboid(15.0, 15.0),
+        LockedAxes::ROTATION_LOCKED,
+        Velocity::zero(),
         crate::components::Inventory::default(),
     ));
     commands.spawn((
@@ -61,7 +70,10 @@ pub fn setup(mut commands: Commands) {
             shot_cooldown: 0.5,
             cooldown_timer: 0.0,
         },
-        Velocity::default(),
+        RigidBody::Dynamic,
+        Collider::cuboid(15.0, 15.0),
+        LockedAxes::ROTATION_LOCKED,
+        Velocity::zero(),
         crate::components::Inventory::default(),
     ));
 }
@@ -110,23 +122,10 @@ pub fn player_input(
     }
 }
 
-pub fn apply_velocity(
-    time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut Velocity, Option<&mut Stats>)>,
-) {
-    for (mut transform, mut velocity, stats) in query.iter_mut() {
-        velocity.linvel.y += GRAVITY * time.delta_seconds();
-        transform.translation.x += velocity.linvel.x * time.delta_seconds();
-        transform.translation.y += velocity.linvel.y * time.delta_seconds();
-        if transform.translation.y < 0.0 {
-            // simple ground
-            transform.translation.y = 0.0;
-            velocity.linvel.y = 0.0;
-        }
-        if let Some(mut s) = stats {
-            if s.cooldown_timer > 0.0 {
-                s.cooldown_timer -= time.delta_seconds();
-            }
+pub fn update_cooldowns(time: Res<Time>, mut query: Query<&mut Stats>) {
+    for mut stats in query.iter_mut() {
+        if stats.cooldown_timer > 0.0 {
+            stats.cooldown_timer -= time.delta_seconds();
         }
     }
 }
@@ -257,9 +256,9 @@ fn spawn_projectile(commands: &mut Commands, owner: usize, stats: &Stats, transf
             damage: stats.damage,
         },
         Lifetime { time_left: 2.0 },
-        Velocity {
-            linvel: Vec2::new(0.0, stats.projectile_speed),
-        },
+        RigidBody::Dynamic,
+        Collider::ball(5.0),
+        Velocity::linear(Vec2::new(0.0, stats.projectile_speed)),
     ));
 }
 

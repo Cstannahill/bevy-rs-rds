@@ -10,15 +10,17 @@ pub struct HealthText {
 #[derive(Component)]
 pub struct ScoreText;
 
-pub fn setup_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+pub fn setup_hud(mut commands: Commands) {
     commands.spawn((
         TextBundle::from_sections([
-            TextSection::new("P1: 0", TextStyle {
-                font: font.clone(),
-                font_size: 20.0,
-                color: Color::WHITE,
-            }),
+            TextSection::new(
+                "P1: 0",
+                TextStyle {
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                    ..default()
+                },
+            ),
         ])
         .with_style(Style {
             position_type: PositionType::Absolute,
@@ -30,11 +32,14 @@ pub fn setup_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     commands.spawn((
         TextBundle::from_sections([
-            TextSection::new("P2: 0", TextStyle {
-                font: font.clone(),
-                font_size: 20.0,
-                color: Color::WHITE,
-            }),
+            TextSection::new(
+                "P2: 0",
+                TextStyle {
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                    ..default()
+                },
+            ),
         ])
         .with_style(Style {
             position_type: PositionType::Absolute,
@@ -46,11 +51,14 @@ pub fn setup_hud(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
     commands.spawn((
         TextBundle::from_sections([
-            TextSection::new("", TextStyle {
-                font,
-                font_size: 20.0,
-                color: Color::WHITE,
-            }),
+            TextSection::new(
+                "",
+                TextStyle {
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                    ..default()
+                },
+            ),
         ])
         .with_style(Style {
             position_type: PositionType::Absolute,
