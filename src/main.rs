@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use bevy::render::{
+    settings::{Backends, WgpuSettings},
+    RenderPlugin,
+};
 use bevy_rapier2d::prelude::*;
 use bevy_rapier2d::render::RapierDebugRenderPlugin;
 
@@ -15,14 +19,23 @@ use states::GameState;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                title: "Magic Duel".into(),
-                resolution: (800., 600.).into(),
-                ..default()
-            }),
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Magic Duel".into(),
+                        resolution: (800., 600.).into(),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(RenderPlugin {
+                    wgpu_settings: WgpuSettings {
+                        backends: Some(Backends::VULKAN),
+                        ..default()
+                    },
+                }),
+        )
         .add_plugins((
             RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0),
             RapierDebugRenderPlugin::default(),
