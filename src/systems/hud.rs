@@ -71,12 +71,14 @@ pub fn setup_hud(mut commands: Commands) {
 }
 
 pub fn update_hud(
-    mut health_texts: Query<(&HealthText, &mut Text)>,
-    mut score_text: Query<&mut Text, With<ScoreText>>,
+    mut texts: ParamSet<(
+        Query<(&HealthText, &mut Text)>,
+        Query<&mut Text, With<ScoreText>>,
+    )>,
     players: Query<(&Player, &Health)>,
     manager: Res<RoundManager>,
 ) {
-    for (marker, mut text) in &mut health_texts {
+    for (marker, mut text) in &mut texts.p0() {
         for (player, health) in &players {
             if player.id == marker.player_id {
                 text.sections[0].value = format!("P{}: {:.0}", player.id, health.current);
@@ -84,7 +86,7 @@ pub fn update_hud(
             }
         }
     }
-    if let Ok(mut text) = score_text.get_single_mut() {
+    if let Ok(mut text) = texts.p1().get_single_mut() {
         text.sections[0].value = format!("Score {} - {}", manager.p1_score, manager.p2_score);
     }
 }
