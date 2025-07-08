@@ -39,6 +39,7 @@ fn main() {
                 systems::update_cooldowns,
                 systems::projectile_cleanup,
                 systems::lifetime_system,
+                systems::poison_damage_system,
                 systems::projectile_player_collision,
                 systems::round_manager,
                 systems::card_input_system,
