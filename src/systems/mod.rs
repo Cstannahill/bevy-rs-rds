@@ -1,5 +1,7 @@
 use crate::components::Lifetime;
-use crate::components::{Health, Inventory, Player, PoisonEffect, Poisoned, Projectile, Stats};
+use crate::components::{
+    Health, Inventory, Player, PoisonEffect, Poisoned, Projectile, SlowEffect, Slowed, Stats,
+};
 use crate::events::PlayerKilled;
 use crate::resources::{CardSelection, RoundManager};
 use crate::states::GameState;
@@ -41,6 +43,7 @@ pub fn setup(mut commands: Commands) {
             shot_cooldown: 0.5,
             cooldown_timer: 0.0,
             poison_damage: 0.0,
+            slow_amount: 0.0,
         },
         RigidBody::Dynamic,
         Collider::cuboid(15.0, 15.0),
@@ -71,6 +74,7 @@ pub fn setup(mut commands: Commands) {
             shot_cooldown: 0.5,
             cooldown_timer: 0.0,
             poison_damage: 0.0,
+            slow_amount: 0.0,
         },
         RigidBody::Dynamic,
         Collider::cuboid(15.0, 15.0),
@@ -83,9 +87,9 @@ pub fn setup(mut commands: Commands) {
 pub fn player_input(
     keyboard: Res<Input<KeyCode>>,
     mut commands: Commands,
-    mut query: Query<(&Player, &mut Stats, &Transform, &mut Velocity)>,
+    mut query: Query<(&Player, &mut Stats, &Transform, &mut Velocity, Option<&Slowed>)>,
 ) {
-    for (player, mut stats, transform, mut velocity) in query.iter_mut() {
+    for (player, mut stats, transform, mut velocity, slowed) in query.iter_mut() {
         let mut direction = 0.0;
         match player.id {
             1 => {
@@ -120,7 +124,11 @@ pub fn player_input(
             }
             _ => {}
         }
-        velocity.linvel.x = direction * stats.move_speed;
+        let mut speed = stats.move_speed;
+        if let Some(s) = slowed {
+            speed *= 1.0 - s.amount;
+        }
+        velocity.linvel.x = direction * speed;
     }
 }
 
@@ -170,6 +178,19 @@ pub fn poison_damage_system(
     }
 }
 
+pub fn slow_system(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut Slowed)>,
+) {
+    for (entity, mut slow) in query.iter_mut() {
+        slow.timer.tick(time.delta());
+        if slow.timer.finished() {
+            commands.entity(entity).remove::<Slowed>();
+        }
+    }
+}
+
 fn aabb_collision(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) -> bool {
     (a_pos.x - b_pos.x).abs() < (a_size.x + b_size.x) * 0.5
         && (a_pos.y - b_pos.y).abs() < (a_size.y + b_size.y) * 0.5
@@ -178,12 +199,18 @@ fn aabb_collision(a_pos: Vec3, a_size: Vec2, b_pos: Vec3, b_size: Vec2) -> bool 
 pub fn projectile_player_collision(
     mut commands: Commands,
     mut players: Query<(Entity, &Player, &mut Health, &Transform)>,
-    mut projectiles: Query<(Entity, &Projectile, &Transform, Option<&PoisonEffect>)>,
+    mut projectiles: Query<(
+        Entity,
+        &Projectile,
+        &Transform,
+        Option<&PoisonEffect>,
+        Option<&SlowEffect>,
+    )>,
     mut kill_writer: EventWriter<PlayerKilled>,
 ) {
     let player_size = Vec2::splat(30.0);
     let proj_size = Vec2::splat(10.0);
-    for (proj_entity, projectile, proj_transform, poison) in projectiles.iter_mut() {
+    for (proj_entity, projectile, proj_transform, poison, slow) in projectiles.iter_mut() {
         for (_player_entity, player, mut health, player_transform) in players.iter_mut() {
             if player.id == projectile.owner {
                 continue;
@@ -199,6 +226,12 @@ pub fn projectile_player_collision(
                     commands.entity(_player_entity).insert(Poisoned {
                         damage_per_second: poison.damage_per_second,
                         timer: Timer::from_seconds(poison.duration, TimerMode::Once),
+                    });
+                }
+                if let Some(slow) = slow {
+                    commands.entity(_player_entity).insert(Slowed {
+                        amount: slow.amount,
+                        timer: Timer::from_seconds(slow.duration, TimerMode::Once),
                     });
                 }
                 commands.entity(proj_entity).despawn();
@@ -286,6 +319,12 @@ fn spawn_projectile(commands: &mut Commands, owner: usize, stats: &Stats, transf
         entity.insert(PoisonEffect {
             damage_per_second: stats.poison_damage,
             duration: 3.0,
+        });
+    }
+    if stats.slow_amount > 0.0 {
+        entity.insert(SlowEffect {
+            amount: stats.slow_amount,
+            duration: 2.0,
         });
     }
 }
