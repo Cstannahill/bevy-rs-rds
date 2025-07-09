@@ -16,6 +16,7 @@ pub use card_selection::{card_click_system, cleanup_card_ui, setup_card_ui};
 pub use game_over::{cleanup_game_over, game_over_input, setup_game_over};
 pub use hud::{setup_hud, update_hud};
 
+
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let assets = GameAssets {
         player1: asset_server.load("bevy_bird.png"),
@@ -26,12 +27,32 @@ pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(Camera2dBundle::default());
     // Simple ground so players have something to stand on
+
+fn spawn_block(commands: &mut Commands, size: Vec2, pos: Vec2, color: Color) {
+
     commands.spawn((
-        Collider::cuboid(400.0, 10.0),
+        SpriteBundle {
+            sprite: Sprite {
+                color,
+                custom_size: Some(size),
+                ..default()
+            },
+            transform: Transform::from_translation(pos.extend(0.0)),
+            ..default()
+        },
+        Collider::cuboid(size.x / 2.0, size.y / 2.0),
         RigidBody::Fixed,
-        Transform::from_xyz(0.0, -10.0, 0.0),
-        GlobalTransform::default(),
     ));
+}
+
+pub fn setup(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
+    // Level geometry
+    spawn_block(&mut commands, Vec2::new(800.0, 20.0), Vec2::new(0.0, -10.0), Color::DARK_GRAY); // ground
+    spawn_block(&mut commands, Vec2::new(150.0, 20.0), Vec2::new(0.0, 80.0), Color::DARK_GRAY); // center platform
+    spawn_block(&mut commands, Vec2::new(100.0, 20.0), Vec2::new(-200.0, 140.0), Color::DARK_GRAY); // left platform
+    spawn_block(&mut commands, Vec2::new(100.0, 20.0), Vec2::new(200.0, 140.0), Color::DARK_GRAY); // right platform
+    spawn_block(&mut commands, Vec2::new(40.0, 40.0), Vec2::new(0.0, 20.0), Color::DARK_GRAY); // center block
     commands.spawn((
         SpriteBundle {
             texture: assets.player1.clone(),
