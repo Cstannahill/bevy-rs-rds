@@ -16,15 +16,30 @@ pub use hud::{setup_hud, update_hud};
 pub use card_selection::{setup_card_ui, cleanup_card_ui, card_click_system};
 pub use game_over::{setup_game_over, cleanup_game_over, game_over_input};
 
+fn spawn_block(commands: &mut Commands, size: Vec2, pos: Vec2, color: Color) {
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                color,
+                custom_size: Some(size),
+                ..default()
+            },
+            transform: Transform::from_translation(pos.extend(0.0)),
+            ..default()
+        },
+        Collider::cuboid(size.x / 2.0, size.y / 2.0),
+        RigidBody::Fixed,
+    ));
+}
+
 pub fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
-    // Simple ground so players have something to stand on
-    commands.spawn((
-        Collider::cuboid(400.0, 10.0),
-        RigidBody::Fixed,
-        Transform::from_xyz(0.0, -10.0, 0.0),
-        GlobalTransform::default(),
-    ));
+    // Level geometry
+    spawn_block(&mut commands, Vec2::new(800.0, 20.0), Vec2::new(0.0, -10.0), Color::DARK_GRAY); // ground
+    spawn_block(&mut commands, Vec2::new(150.0, 20.0), Vec2::new(0.0, 80.0), Color::DARK_GRAY); // center platform
+    spawn_block(&mut commands, Vec2::new(100.0, 20.0), Vec2::new(-200.0, 140.0), Color::DARK_GRAY); // left platform
+    spawn_block(&mut commands, Vec2::new(100.0, 20.0), Vec2::new(200.0, 140.0), Color::DARK_GRAY); // right platform
+    spawn_block(&mut commands, Vec2::new(40.0, 40.0), Vec2::new(0.0, 20.0), Color::DARK_GRAY); // center block
     commands.spawn((
         SpriteBundle {
             transform: Transform::from_xyz(-100.0, 15.0, 0.0),
