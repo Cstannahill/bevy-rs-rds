@@ -113,10 +113,10 @@ pub fn player_input(
                     direction += 1.0;
                 }
                 if keyboard.pressed(KeyCode::Q) || keyboard.pressed(KeyCode::W) {
-                    stats.aim_angle += 0.05;
+                    stats.aim_angle += 0.03;
                 }
                 if keyboard.pressed(KeyCode::E) || keyboard.pressed(KeyCode::S) {
-                    stats.aim_angle -= 0.05;
+                    stats.aim_angle -= 0.03;
                 }
                 if keyboard.just_pressed(KeyCode::Space) && transform.translation.y <= 16.0 {
                     velocity.linvel.y = stats.jump_force;
@@ -134,10 +134,10 @@ pub fn player_input(
                     direction += 1.0;
                 }
                 if keyboard.pressed(KeyCode::Comma) || keyboard.pressed(KeyCode::I) {
-                    stats.aim_angle += 0.05;
+                    stats.aim_angle += 0.03;
                 }
                 if keyboard.pressed(KeyCode::Period) || keyboard.pressed(KeyCode::K) {
-                    stats.aim_angle -= 0.05;
+                    stats.aim_angle -= 0.03;
                 }
                 if keyboard.just_pressed(KeyCode::Up) && transform.translation.y <= 16.0 {
                     velocity.linvel.y = stats.jump_force;
