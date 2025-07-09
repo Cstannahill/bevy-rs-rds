@@ -45,6 +45,10 @@ fn main() {
         .add_state::<GameState>()
         .add_event::<PlayerKilled>()
         .add_systems(Startup, (systems::setup, systems::setup_hud))
+        .add_systems(OnEnter(GameState::CardSelection), systems::setup_card_ui)
+        .add_systems(OnExit(GameState::CardSelection), systems::cleanup_card_ui)
+        .add_systems(OnEnter(GameState::GameOver), systems::setup_game_over)
+        .add_systems(OnExit(GameState::GameOver), systems::cleanup_game_over)
         .add_systems(
             Update,
             (
@@ -56,9 +60,18 @@ fn main() {
                 systems::slow_system,
                 systems::projectile_player_collision,
                 systems::round_manager,
-                systems::card_input_system,
                 systems::update_hud,
-            ),
+            )
+                .run_if(in_state(GameState::InGame)),
+        )
+        .add_systems(
+            Update,
+            (systems::card_input_system, systems::card_click_system)
+                .run_if(in_state(GameState::CardSelection)),
+        )
+        .add_systems(
+            Update,
+            (systems::game_over_input).run_if(in_state(GameState::GameOver)),
         )
         .run();
 }
