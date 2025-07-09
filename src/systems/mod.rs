@@ -8,6 +8,7 @@ use crate::states::GameState;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+
 mod hud;
 mod card_selection;
 mod game_over;
@@ -16,11 +17,16 @@ pub use hud::{setup_hud, update_hud};
 pub use card_selection::{setup_card_ui, cleanup_card_ui, card_click_system};
 pub use game_over::{setup_game_over, cleanup_game_over, game_over_input};
 
-fn spawn_block(commands: &mut Commands, size: Vec2, pos: Vec2, color: Color) {
+fn spawn_textured_block(
+    commands: &mut Commands,
+    size: Vec2,
+    pos: Vec2,
+    texture: Handle<Image>,
+) {
     commands.spawn((
         SpriteBundle {
+            texture,
             sprite: Sprite {
-                color,
                 custom_size: Some(size),
                 ..default()
             },
@@ -32,14 +38,23 @@ fn spawn_block(commands: &mut Commands, size: Vec2, pos: Vec2, color: Color) {
     ));
 }
 
-pub fn setup(mut commands: Commands) {
+pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
+    // Load textures
+    let ground_tex = asset_server.load("ground.png");
+    let block_tex = asset_server.load("block.png");
+    let terrain_tex = asset_server.load("terrain.png");
+
     // Level geometry
-    spawn_block(&mut commands, Vec2::new(800.0, 20.0), Vec2::new(0.0, -10.0), Color::DARK_GRAY); // ground
-    spawn_block(&mut commands, Vec2::new(150.0, 20.0), Vec2::new(0.0, 80.0), Color::DARK_GRAY); // center platform
-    spawn_block(&mut commands, Vec2::new(100.0, 20.0), Vec2::new(-200.0, 140.0), Color::DARK_GRAY); // left platform
-    spawn_block(&mut commands, Vec2::new(100.0, 20.0), Vec2::new(200.0, 140.0), Color::DARK_GRAY); // right platform
-    spawn_block(&mut commands, Vec2::new(40.0, 40.0), Vec2::new(0.0, 20.0), Color::DARK_GRAY); // center block
+    spawn_textured_block(&mut commands, Vec2::new(800.0, 20.0), Vec2::new(0.0, -10.0), ground_tex.clone()); // ground
+    spawn_textured_block(&mut commands, Vec2::new(150.0, 20.0), Vec2::new(0.0, 80.0), block_tex.clone()); // center platform
+    spawn_textured_block(&mut commands, Vec2::new(100.0, 20.0), Vec2::new(-200.0, 140.0), block_tex.clone()); // left platform
+    spawn_textured_block(&mut commands, Vec2::new(100.0, 20.0), Vec2::new(200.0, 140.0), block_tex.clone()); // right platform
+    spawn_textured_block(&mut commands, Vec2::new(40.0, 40.0), Vec2::new(0.0, 20.0), block_tex.clone()); // center block
+    // Additional terrain
+    spawn_textured_block(&mut commands, Vec2::new(20.0, 600.0), Vec2::new(-410.0, 290.0), terrain_tex.clone()); // left wall
+    spawn_textured_block(&mut commands, Vec2::new(20.0, 600.0), Vec2::new(410.0, 290.0), terrain_tex.clone()); // right wall
+    spawn_textured_block(&mut commands, Vec2::new(150.0, 20.0), Vec2::new(0.0, 200.0), block_tex.clone()); // high platform
     commands.spawn((
         SpriteBundle {
             transform: Transform::from_xyz(-100.0, 15.0, 0.0),
