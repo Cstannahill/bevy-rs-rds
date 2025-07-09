@@ -42,7 +42,8 @@ pub fn setup(mut commands: Commands) {
         },
         Stats {
             move_speed: 200.0,
-            jump_force: 400.0,
+            // 8 m/s jump velocity so players stay on screen
+            jump_force: 8.0,
             damage: 10.0,
             projectile_speed: 300.0,
             shot_cooldown: 0.5,
@@ -74,7 +75,8 @@ pub fn setup(mut commands: Commands) {
         },
         Stats {
             move_speed: 200.0,
-            jump_force: 400.0,
+            // 8 m/s jump velocity so players stay on screen
+            jump_force: 8.0,
             damage: 10.0,
             projectile_speed: 300.0,
             shot_cooldown: 0.5,
