@@ -13,6 +13,13 @@ pub struct CardSelection {
     pub choices: Vec<crate::cards::Card>,
 }
 
+#[derive(Resource, Clone)]
+pub struct GameAssets {
+    pub player1: Handle<Image>,
+    pub player2: Handle<Image>,
+    pub projectile: Handle<Image>,
+}
+
 impl Default for RoundManager {
     fn default() -> Self {
         Self {
