@@ -49,7 +49,7 @@ pub fn setup(mut commands: Commands) {
             cooldown_timer: 0.0,
             poison_damage: 0.0,
             slow_amount: 0.0,
-            aim_angle: std::f32::consts::FRAC_PI_2,
+            aim_angle: 0.0,
         },
         RigidBody::Dynamic,
         Collider::cuboid(15.0, 15.0),
@@ -81,7 +81,7 @@ pub fn setup(mut commands: Commands) {
             cooldown_timer: 0.0,
             poison_damage: 0.0,
             slow_amount: 0.0,
-            aim_angle: std::f32::consts::FRAC_PI_2,
+            aim_angle: 0.0,
         },
         RigidBody::Dynamic,
         Collider::cuboid(15.0, 15.0),
@@ -112,10 +112,10 @@ pub fn player_input(
                 if keyboard.pressed(KeyCode::D) {
                     direction += 1.0;
                 }
-                if keyboard.pressed(KeyCode::Q) {
+                if keyboard.pressed(KeyCode::Q) || keyboard.pressed(KeyCode::W) {
                     stats.aim_angle += 0.05;
                 }
-                if keyboard.pressed(KeyCode::E) {
+                if keyboard.pressed(KeyCode::E) || keyboard.pressed(KeyCode::S) {
                     stats.aim_angle -= 0.05;
                 }
                 if keyboard.just_pressed(KeyCode::Space) && transform.translation.y <= 16.0 {
@@ -133,10 +133,10 @@ pub fn player_input(
                 if keyboard.pressed(KeyCode::Right) {
                     direction += 1.0;
                 }
-                if keyboard.pressed(KeyCode::Comma) {
+                if keyboard.pressed(KeyCode::Comma) || keyboard.pressed(KeyCode::I) {
                     stats.aim_angle += 0.05;
                 }
-                if keyboard.pressed(KeyCode::Period) {
+                if keyboard.pressed(KeyCode::Period) || keyboard.pressed(KeyCode::K) {
                     stats.aim_angle -= 0.05;
                 }
                 if keyboard.just_pressed(KeyCode::Up) && transform.translation.y <= 16.0 {
