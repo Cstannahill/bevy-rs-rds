@@ -3,20 +3,33 @@ use crate::components::{
     Health, Inventory, Player, PoisonEffect, Poisoned, Projectile, SlowEffect, Slowed, Stats,
 };
 use crate::events::PlayerKilled;
-use crate::resources::{CardSelection, RoundManager};
+use crate::resources::{CardSelection, GameAssets, RoundManager};
 use crate::states::GameState;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-mod hud;
 mod card_selection;
 mod game_over;
+mod hud;
 
+pub use card_selection::{card_click_system, cleanup_card_ui, setup_card_ui};
+pub use game_over::{cleanup_game_over, game_over_input, setup_game_over};
 pub use hud::{setup_hud, update_hud};
-pub use card_selection::{setup_card_ui, cleanup_card_ui, card_click_system};
-pub use game_over::{setup_game_over, cleanup_game_over, game_over_input};
+
+
+pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let assets = GameAssets {
+        player1: asset_server.load("bevy_bird.png"),
+        player2: asset_server.load("bevy_icon.png"),
+        projectile: asset_server.load("crosshair.png"),
+    };
+    commands.insert_resource(assets.clone());
+
+    commands.spawn(Camera2dBundle::default());
+    // Simple ground so players have something to stand on
 
 fn spawn_block(commands: &mut Commands, size: Vec2, pos: Vec2, color: Color) {
+
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
@@ -42,9 +55,9 @@ pub fn setup(mut commands: Commands) {
     spawn_block(&mut commands, Vec2::new(40.0, 40.0), Vec2::new(0.0, 20.0), Color::DARK_GRAY); // center block
     commands.spawn((
         SpriteBundle {
+            texture: assets.player1.clone(),
             transform: Transform::from_xyz(-100.0, 15.0, 0.0),
             sprite: Sprite {
-                color: Color::BLUE,
                 custom_size: Some(Vec2::splat(30.0)),
                 ..default()
             },
@@ -75,9 +88,9 @@ pub fn setup(mut commands: Commands) {
     ));
     commands.spawn((
         SpriteBundle {
+            texture: assets.player2.clone(),
             transform: Transform::from_xyz(100.0, 15.0, 0.0),
             sprite: Sprite {
-                color: Color::RED,
                 custom_size: Some(Vec2::splat(30.0)),
                 ..default()
             },
@@ -118,6 +131,7 @@ pub fn player_input(
         &mut Velocity,
         Option<&Slowed>,
     )>,
+    assets: Res<GameAssets>,
 ) {
     for (player, mut stats, transform, mut velocity, slowed) in query.iter_mut() {
         let mut direction = 0.0;
@@ -139,7 +153,7 @@ pub fn player_input(
                     velocity.linvel.y = stats.jump_force;
                 }
                 if keyboard.pressed(KeyCode::ControlLeft) && stats.cooldown_timer <= 0.0 {
-                    spawn_projectile(&mut commands, player.id, &*stats, transform);
+                    spawn_projectile(&mut commands, player.id, &*stats, transform, &assets);
                     stats.cooldown_timer = stats.shot_cooldown;
                 }
             }
@@ -160,7 +174,7 @@ pub fn player_input(
                     velocity.linvel.y = stats.jump_force;
                 }
                 if keyboard.pressed(KeyCode::Return) && stats.cooldown_timer <= 0.0 {
-                    spawn_projectile(&mut commands, player.id, &*stats, transform);
+                    spawn_projectile(&mut commands, player.id, &*stats, transform, &assets);
                     stats.cooldown_timer = stats.shot_cooldown;
                 }
             }
@@ -336,12 +350,18 @@ pub fn round_manager(
     }
 }
 
-fn spawn_projectile(commands: &mut Commands, owner: usize, stats: &Stats, transform: &Transform) {
+fn spawn_projectile(
+    commands: &mut Commands,
+    owner: usize,
+    stats: &Stats,
+    transform: &Transform,
+    assets: &GameAssets,
+) {
     let mut entity = commands.spawn((
         SpriteBundle {
+            texture: assets.projectile.clone(),
             sprite: Sprite {
-                color: Color::YELLOW,
-                custom_size: Some(Vec2::splat(10.0)),
+                custom_size: Some(Vec2::splat(20.0)),
                 ..default()
             },
             transform: Transform::from_translation(
