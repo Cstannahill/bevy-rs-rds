@@ -9,7 +9,12 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 mod hud;
+mod card_selection;
+mod game_over;
+
 pub use hud::{setup_hud, update_hud};
+pub use card_selection::{setup_card_ui, cleanup_card_ui, card_click_system};
+pub use game_over::{setup_game_over, cleanup_game_over, game_over_input};
 
 pub fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
@@ -358,11 +363,7 @@ pub fn card_input_system(
     mut next_state: ResMut<NextState<GameState>>,
     mut selection: ResMut<CardSelection>,
     mut players: Query<(&Player, &mut Stats, &mut Inventory)>,
-    state: Res<State<GameState>>,
 ) {
-    if state.get() != &GameState::CardSelection {
-        return;
-    }
     let loser = match selection.loser {
         Some(id) => id,
         None => return,
